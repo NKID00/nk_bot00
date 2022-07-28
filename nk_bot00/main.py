@@ -4,16 +4,18 @@ from json import load as json_load
 
 from mirai import Mirai, FriendMessage, GroupMessage, TempMessage, WebSocketAdapter, MessageChain
 
-from .exception import ArgumentException
-from .hello import on_command_hello
-from .echo import on_command_echo
-from .mapping import on_command_mapping
+from nk_bot00.exception import ArgumentException
+from nk_bot00.hello import on_command_hello
+from nk_bot00.echo import on_command_echo
+from nk_bot00.mapping import on_command_mapping
+from nk_bot00.ping import on_command_ping
 
 
 COMMAND_HANDLER = {
     'hello': on_command_hello,
     'echo': on_command_echo,
-    'mapping': on_command_mapping
+    'mapping': on_command_mapping,
+    'ping': on_command_ping
 }
 COMMAND_ALIAS = {
     'e': 'echo',
@@ -60,6 +62,10 @@ def main():
     bot = Mirai(config['bot_qq'], adapter=WebSocketAdapter(
         verify_key=config['verify_key'], host=config['host'], port=config['port']
     ))
+    command_config = config['command_config']
+    for c in COMMAND_HANDLER:
+        if c not in command_config:
+            command_config[c] = {}
 
     @bot.on(FriendMessage)
     async def _(event: FriendMessage):
@@ -72,7 +78,7 @@ def main():
                 await bot.send(event, get_help_message(args, available_commands))
             elif command in available_commands:
                 try:
-                    await COMMAND_HANDLER[command](bot, event, args)
+                    await COMMAND_HANDLER[command](bot, event, args, command_config[command])
                 except ArgumentException:
                     await bot.send(event, get_help_message([command], available_commands))
 
@@ -87,7 +93,7 @@ def main():
                 await bot.send(event, get_help_message(args, available_commands))
             elif command in available_commands:
                 try:
-                    await COMMAND_HANDLER[command](bot, event, args)
+                    await COMMAND_HANDLER[command](bot, event, args, command_config[command])
                 except ArgumentException:
                     await bot.send(event, get_help_message([command], available_commands))
 

@@ -1,5 +1,4 @@
 from argparse import ArgumentParser, ArgumentError
-from datetime import datetime, timedelta
 from os import remove as os_remove, walk as os_walk
 from pathlib import Path
 from sqlite3 import Connection, Cursor, connect, Row
@@ -7,37 +6,18 @@ from sys import argv
 from re import match as re_match
 from gzip import decompress
 from traceback import print_exc
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 from threading import Lock
 
 from mirai import Mirai, MessageEvent
-from mirai.models.message import Forward, ForwardMessageNode, MessageChain, MessageComponent
 from httpx import get as httpx_get
 
-from .exception import ArgumentException
+from nk_bot00.exception import ArgumentException
+from nk_bot00.util import generate_forward_message
 
 MOJANG_METADATA_URL = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json'
 YARN_METADATA_URL = 'https://meta.fabricmc.net/v2/versions/yarn'
 YARN_MAPPING_URL = 'https://maven.fabricmc.net/net/fabricmc/yarn/%s/yarn-%s-tiny.gz'
-
-
-def generate_forward_message(sender_id: int, content: List[Union[MessageChain, MessageComponent, str]]):
-    nodes: List[ForwardMessageNode] = []
-    time = datetime.now()
-    time -= timedelta(seconds=len(content))
-    for s in content:
-        if isinstance(s, (MessageComponent, str)):
-            message = MessageChain([s])
-        else:
-            message = s
-        nodes.append(ForwardMessageNode(
-            sender_id=sender_id,
-            sender_name='Yet Another Fabric Bot',
-            message_chain=message,
-            time=time
-        ))
-        time += timedelta(seconds=1)
-    return Forward(node_list=nodes)
 
 
 class Mapping:
@@ -144,12 +124,12 @@ class Mapping:
                 f'official: {row["official_class"]}.{row["official"]}',
                 f'method descriptor: {row["method_descriptor"]}',
                 f'intermediary: {row["intermediary"]}',
-                f'mojang: {row_class["mojang"]}.{row["mojang"]}' \
-                    f'{map_method_mojang(row["method_descriptor"], self.c)}',
-                f'mojang mixin: "{row["mojang"]}' \
-                    f'{map_mixin_mojang(row["method_descriptor"], self.c)}"',
-                f'yarn: {row_class["yarn"]}.{row["yarn"]}' \
-                    f'{map_method_yarn(row["method_descriptor"], self.c)}',
+                f'mojang: {row_class["mojang"]}.{row["mojang"]}'
+                f'{map_method_mojang(row["method_descriptor"], self.c)}',
+                f'mojang mixin: "{row["mojang"]}'
+                f'{map_mixin_mojang(row["method_descriptor"], self.c)}"',
+                f'yarn: {row_class["yarn"]}.{row["yarn"]}'
+                f'{map_method_yarn(row["method_descriptor"], self.c)}',
                 f'yarn mixin: "{row["yarn"]}{map_mixin_yarn(row["method_descriptor"], self.c)}"'
             ]
         return None
@@ -183,7 +163,7 @@ del redirect_error
 MAPPINGS: Dict[str, Mapping] = {}
 
 
-async def on_command_mapping(bot: Mirai, event: MessageEvent, args_raw: List[str]):
+async def on_command_mapping(bot: Mirai, event: MessageEvent, args_raw: List[str], _config: dict):
     '''!m <名称> [<类型>] [<命名空间>] [<mc版本>]
     查找并显示匹配的第一个映射
     <类型> := class | field | method | [any]
@@ -205,7 +185,7 @@ async def on_command_mapping(bot: Mirai, event: MessageEvent, args_raw: List[str
         if result is None:
             await bot.send(event, '未知映射')
         else:
-            await bot.send(event, generate_forward_message(bot.qq, result))
+            await bot.send(event, generate_forward_message(bot.qq, 'Yet Another Fabric Bot', result))
 
 
 def fetch_mapping() -> None:

@@ -8,7 +8,8 @@
     },
     "group_permission": {
         "some_random_group_id": [
-            "mapping"
+            "mapping",
+            "ping"
         ],
         "another_random_group_id": [
             "hello",
@@ -19,5 +20,11 @@
     "bot_qq": 1145141919810,
     "verify_key": "1145141919810",
     "host": "localhost",
-    "port": 11451
+    "port": 11451,
+    "command_config": {
+        "ping": {
+            "some_random_group_id": "some_random_server_address",
+            "another_random_group_id": "another_random_server_address"
+        }
+    }
 }
