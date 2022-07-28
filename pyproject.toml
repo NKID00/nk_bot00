@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "nk_bot00"
+version = "0.1.0"
+description = ""
+authors = ["NKID00 <nkid00@pm.me>"]
+license = "AGPL-v3-only"
+
+[tool.poetry.dependencies]
+python = ">=3.7.2,<=3.10"
+yiri-mirai = { git = "git@github.com:YiriMiraiProject/YiriMirai.git", branch = "master" }
+uvicorn = "^0.18.2"
+httpx = "^0.23.0"
+mcstatus = "^9.2.0"
+
+[tool.poetry.dev-dependencies]
+pylint = "^2.14.5"
+autopep8 = "^1.6.0"
+mypy = "^0.971"
+
+# 使用镜像源以加快大陆用户的依赖安装速度
+[[tool.poetry.source]]
+name = "tuna"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
+
+[tool.poetry.scripts]
+main = "nk_bot00.main:main"
+mapping = "nk_bot00.mapping:fetch_mapping"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

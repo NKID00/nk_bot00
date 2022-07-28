@@ -1,0 +1,23 @@
+{
+    "friend_permission": {
+        "some_random_friend_qq": [
+            "hello",
+            "echo",
+            "mapping"
+        ]
+    },
+    "group_permission": {
+        "some_random_group_id": [
+            "mapping"
+        ],
+        "another_random_group_id": [
+            "hello",
+            "echo",
+            "mapping"
+        ]
+    },
+    "bot_qq": 1145141919810,
+    "verify_key": "1145141919810",
+    "host": "localhost",
+    "port": 11451
+}
