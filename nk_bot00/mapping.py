@@ -158,7 +158,7 @@ async def on_command_mapping(bot: Mirai, event: MessageEvent, args: List[str], _
     type_ = None
     namespace = None
     mcversion = '1.19'
-    for option in args:
+    for option in args[1:]:
         if option in OPTIONS_TYPE:
             type_ = option
         elif option in OPTIONS_NAMESPACE:
