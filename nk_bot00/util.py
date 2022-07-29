@@ -4,7 +4,11 @@ from typing import List, Union
 from mirai.models.message import Forward, ForwardMessageNode, MessageChain, MessageComponent
 
 
-def generate_forward_message(sender_id: int, sender_name: str, content: List[Union[MessageChain, MessageComponent, str]]):
+def forward_message(
+    sender_id: int,
+    sender_name: str,
+    content: List[Union[MessageChain, MessageComponent, str]]
+):
     nodes: List[ForwardMessageNode] = []
     time = datetime.now()
     time -= timedelta(seconds=len(content))

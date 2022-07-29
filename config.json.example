@@ -1,4 +1,8 @@
 {
+    "command_prefix": [
+        "!",
+        "！"
+    ],
     "friend_permission": {
         "some_random_friend_qq": [
             "hello",

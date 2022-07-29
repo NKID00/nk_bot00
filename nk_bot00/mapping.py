@@ -1,4 +1,3 @@
-from argparse import ArgumentParser, ArgumentError
 from os import remove as os_remove, walk as os_walk
 from pathlib import Path
 from sqlite3 import Connection, Cursor, connect, Row
@@ -13,7 +12,7 @@ from mirai import Mirai, MessageEvent
 from httpx import get as httpx_get
 
 from nk_bot00.exception import ArgumentException
-from nk_bot00.util import generate_forward_message
+from nk_bot00.util import forward_message
 
 MOJANG_METADATA_URL = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json'
 YARN_METADATA_URL = 'https://meta.fabricmc.net/v2/versions/yarn'
@@ -44,14 +43,19 @@ class Mapping:
         with self.lock:
             return self.c.execute(sql, args)
 
-    def find(self, name: str, type_: str, namespace: str) -> Optional[List[str]]:
-        if type_ == 'any':
+    def find(
+        self,
+        name: str,
+        type_: Optional[str],
+        namespace: Optional[str]
+    ) -> Optional[List[str]]:
+        if type_ is None:
             for t in ('class', 'field', 'method'):
                 result = self.find(name, t, namespace)
                 if result is not None:
                     return result
             return None
-        if namespace == 'any':
+        if namespace is None:
             for ns in ('official', 'intermediary', 'mojang', 'yarn'):
                 result = self.find(name, type_, ns)
                 if result is not None:
@@ -59,15 +63,14 @@ class Mapping:
             return None
 
         if type_ == 'class':
-            if namespace == 'official':
+            row = self.execute(
+                f'SELECT * FROM class WHERE {namespace} = ? COLLATE NOCASE LIMIT 1;',
+                (name,)
+            ).fetchone()
+            if row is None:
                 row = self.execute(
-                    'SELECT * FROM class WHERE official = ? LIMIT 1;',
-                    (name,)
-                ).fetchone()
-            else:
-                row = self.execute(
-                    f'SELECT * FROM class WHERE {namespace} LIKE ? LIMIT 1;',
-                    (f'%{name}',)
+                    f'SELECT * FROM class WHERE {namespace} LIKE ? COLLATE NOCASE LIMIT 1;',
+                    (f'%.{name}',)
                 ).fetchone()
             if row is None:
                 return None
@@ -80,9 +83,9 @@ class Mapping:
                 f'yarn: {row["yarn"]}',
             ]
 
-        elif type_ == 'field':
+        if type_ == 'field':
             row = self.execute(
-                f'SELECT * FROM field WHERE {namespace} = ? LIMIT 1;',
+                f'SELECT * FROM field WHERE {namespace} = ? COLLATE NOCASE LIMIT 1;',
                 (name,)
             ).fetchone()
             if row is None:
@@ -104,9 +107,9 @@ class Mapping:
                 f'yarn: {row_class["yarn"]}.{row["yarn"]}'
             ]
 
-        elif type_ == 'method':
+        if type_ == 'method':
             row = self.execute(
-                f'SELECT * FROM method WHERE {namespace} = ? LIMIT 1;',
+                f'SELECT * FROM method WHERE {namespace} = ? COLLATE NOCASE LIMIT 1;',
                 (name,)
             ).fetchone()
             if row is None:
@@ -135,49 +138,39 @@ class Mapping:
         return None
 
 
-PARSER = ArgumentParser(add_help=False, exit_on_error=False)
-PARSER.add_argument('name')
-PARSER.add_argument('type', choices=(
-    'class', 'field', 'method', 'any'
-), nargs='?', default='any')
-PARSER.add_argument('namespace', choices=(
-    'official', 'intermediary', 'mojang', 'yarn', 'any'
-), nargs='?', default='any')
-PARSER.add_argument('mcVersion', choices=(
-    '1.15.2', '1.16.5', '1.17.1', '1.18.2', '1.19'
-), nargs='?', default='1.19')
+OPTIONS_TYPE = ('class', 'field', 'method')
+OPTIONS_NAMESPACE = ('official', 'intermediary', 'mojang', 'yarn')
+OPTIONS_MCVERSION = ('1.15.2', '1.16.5', '1.17.1', '1.18.2', '1.19')
 
-
-def redirect_exit(_status=0, message=None):
-    raise ArgumentException(message)
-
-
-def redirect_error(message):
-    raise ArgumentException(message)
-
-
-PARSER.exit = redirect_exit  # type: ignore
-PARSER.error = redirect_error  # type: ignore
-del redirect_exit
-del redirect_error
 MAPPINGS: Dict[str, Mapping] = {}
 
 
-async def on_command_mapping(bot: Mirai, event: MessageEvent, args_raw: List[str], _config: dict):
-    '''!m <名称> [<类型>] [<命名空间>] [<mc版本>]
+async def on_command_mapping(bot: Mirai, event: MessageEvent, args: List[str], _config: dict):
+    '''!m [名称] [选项...]
     查找并显示匹配的第一个映射
-    <类型> := class | field | method | [any]
-    <命名空间> := official | intermediary | mojang | yarn | [any]
-    <mc版本> := 1.15.2 | 1.16.5 | 1.17.1 | 1.18.2 | [1.19]'''
+    [选项] := [类型] | [命名空间] | [MC版本]
+    [类型] := class | field | method [默认: 任意]
+    [命名空间] := official | intermediary | mojang | yarn [默认: 任意]
+    [MC版本] := 1.15.2 | 1.16.5 | 1.17.1 | 1.18.2 | 1.19 [默认: 1.19]'''
+    if len(args) == 0:
+        raise ArgumentException('参数不足')
+    name = args[0]
+    type_ = None
+    namespace = None
+    mcversion = '1.19'
+    for option in args:
+        if option in OPTIONS_TYPE:
+            type_ = option
+        elif option in OPTIONS_NAMESPACE:
+            namespace = option
+        elif option in OPTIONS_MCVERSION:
+            mcversion = option
+        else:
+            raise ArgumentException(f'选项 {option:r} 未知')
+    if mcversion not in MAPPINGS:
+        MAPPINGS[mcversion] = Mapping(mcversion)
     try:
-        args = PARSER.parse_args(args_raw)
-    except ArgumentError as e:
-        raise ArgumentException from e
-    version = args.mcVersion
-    if version not in MAPPINGS:
-        MAPPINGS[version] = Mapping(version)
-    try:
-        result = MAPPINGS[version].find(args.name, args.type, args.namespace)
+        result = MAPPINGS[mcversion].find(name, type_, namespace)
     except Exception:  # pylint: disable=broad-except
         print_exc()
         await bot.send(event, '内部错误')
@@ -185,7 +178,7 @@ async def on_command_mapping(bot: Mirai, event: MessageEvent, args_raw: List[str
         if result is None:
             await bot.send(event, '未知映射')
         else:
-            await bot.send(event, generate_forward_message(bot.qq, 'Yet Another Fabric Bot', result))
+            await bot.send(event, forward_message(bot.qq, 'Yet Another Fabric Bot', result))
 
 
 def fetch_mapping() -> None:
