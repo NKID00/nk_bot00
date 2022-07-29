@@ -1,8 +1,8 @@
 from shlex import split as shlex_split
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Tuple
 from json import load as json_load
 
-from mirai import Mirai, FriendMessage, GroupMessage, MessageEvent, WebSocketAdapter, MessageChain
+from mirai import Mirai, FriendMessage, GroupMessage, MessageEvent, WebSocketAdapter
 
 from nk_bot00.exception import ArgumentException
 from nk_bot00.hello import on_command_hello
@@ -23,10 +23,19 @@ COMMAND_ALIAS: Dict[str, str] = {
 }
 
 
-def get_help_message(args: List[str], available_commands: Iterable[str]) -> str:
+def get_help_message(args: List[str], command_prefix: Tuple[str], available_commands: Iterable[str]) -> str:
     if len(args) == 1:
-        command = args[0]
-        if command in COMMAND_HANDLER:
+        command = args[0].strip()
+        if command.startswith(command_prefix):
+            # 只接受允许的前缀开头的命令
+            command = command[1:].strip()
+        command = COMMAND_ALIAS.get(command, command)
+        if command == 'help':
+            return (
+                '!h [命令]\n'
+                '  显示命令用法\n'
+            )
+        elif command in COMMAND_HANDLER:
             docstring = COMMAND_HANDLER[command].__doc__
             if docstring is not None:
                 return '\n  '.join(s.strip() for s in docstring.splitlines(False))
@@ -85,7 +94,7 @@ def main():
 
         try:
             if command == 'help':
-                await bot.send(event, get_help_message(args, available_commands))
+                await bot.send(event, get_help_message(args, command_prefix, available_commands))
             elif command in available_commands:
                 await COMMAND_HANDLER[command](bot, event, args, command_config[command])
         except ArgumentException as e:
