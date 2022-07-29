@@ -166,7 +166,7 @@ async def on_command_mapping(bot: Mirai, event: MessageEvent, args: List[str], _
         elif option in OPTIONS_MCVERSION:
             mcversion = option
         else:
-            raise ArgumentException(f'选项 {option:r} 未知')
+            raise ArgumentException('未知选项')
     if mcversion not in MAPPINGS:
         MAPPINGS[mcversion] = Mapping(mcversion)
     try:
