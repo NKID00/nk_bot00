@@ -18,7 +18,7 @@ COMMAND_HANDLER: Dict[str, Callable[[Mirai, MessageEvent, List[str], Any], Await
     'ping': on_command_ping
 }
 COMMAND_ALIAS: Dict[str, str] = {
-    'e': 'echo',
+    'h': 'help',
     'm': 'mapping',
     'map': 'mapping'
 }
@@ -50,7 +50,7 @@ def get_help_message(args: List[str], available_commands: Iterable[str]) -> str:
     return (
         '![命令] [参数...]\n'
         '  执行命令\n'
-        '!help [命令]\n'
+        '!h [命令]\n'
         '  显示命令用法\n'
         '  [命令] := ' + ' | '.join(available_commands)
     )
@@ -70,9 +70,12 @@ async def execute_command(
         elif command in available_commands:
             await COMMAND_HANDLER[command](bot, event, args, command_config[command])
     except ArgumentException as e:
-        await bot.send(event,'%s\n%s' % (
-            e, get_help_message([command], available_commands)
-        ))
+        await bot.send(
+            event,
+            f'{e}\n'
+            f'!h [命令]\n'
+            f'  显示命令用法\n'
+        )
 
 
 def main():
@@ -91,31 +94,27 @@ def main():
         if c not in command_config:
             command_config[c] = {}
 
-    @bot.on(FriendMessage)
-    async def _(event: FriendMessage):
-        if event.sender.id in friend_permission:
-            optional = parse_command(command_prefix, event.message_chain)
-            if optional is None:
+    @bot.on(MessageEvent)
+    async def _(event: MessageEvent):
+        if isinstance(event, FriendMessage):
+            if event.sender.id not in friend_permission:
                 return
-            command, args = optional
             available_commands = friend_permission[event.sender.id]
-            await execute_command(
-                bot, event, command, args,
-                available_commands, command_config[command]
-            )
-
-    @bot.on(GroupMessage)
-    async def _(event: GroupMessage):
-        if event.group.id in group_permission:
-            optional = parse_command(command_prefix, event.message_chain)
-            if optional is None:
+        elif isinstance(event, GroupMessage):
+            if event.group.id not in group_permission:
                 return
-            command, args = optional
             available_commands = group_permission[event.group.id]
-            await execute_command(
-                bot, event, command, args,
-                available_commands, command_config[command]
-            )
+        else:
+            return
+
+        optional = parse_command(command_prefix, event.message_chain)
+        if optional is None:
+            return
+        command, args = optional
+        await execute_command(
+            bot, event, command, args,
+            available_commands, command_config[command]
+        )
 
     bot.run(host='localhost', port=32181)
 
