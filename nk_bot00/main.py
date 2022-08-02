@@ -35,7 +35,7 @@ def get_help_message(args: List[str], command_prefix: Tuple[str], available_comm
                 '!h [命令]\n'
                 '  显示命令用法\n'
             )
-        elif command in COMMAND_HANDLER:
+        if command in COMMAND_HANDLER:
             docstring = COMMAND_HANDLER[command].__doc__
             if docstring is not None:
                 return '\n  '.join(s.strip() for s in docstring.splitlines(False))

@@ -26,10 +26,10 @@ class Mapping:
 
     def __init__(self, version: str) -> None:
         for f in next(os_walk('mapping'))[2]:
-            if f.startswith(version):
+            if f.startswith(f'{version}+'):
                 break
         else:
-            raise ValueError('Incorrect game version.')
+            raise ArgumentException('未知的 mc 版本')
         self.c = connect(
             Path('mapping') / f,
             check_same_thread=False,
@@ -63,6 +63,7 @@ class Mapping:
             return None
 
         if type_ == 'class':
+            # TODO: if name.startswith('.')
             row = self.execute(
                 f'SELECT * FROM class WHERE {namespace} = ? COLLATE NOCASE LIMIT 1;',
                 (name,)
@@ -140,24 +141,36 @@ class Mapping:
 
 OPTIONS_TYPE = ('class', 'field', 'method')
 OPTIONS_NAMESPACE = ('official', 'intermediary', 'mojang', 'yarn')
-OPTIONS_MCVERSION = ('1.15.2', '1.16.5', '1.17.1', '1.18.2', '1.19')
+MCVERSION = {
+    15: 2,
+    16: 5,
+    17: 1,
+    18: 2,
+    19: 1
+}
+OPTIONS_MCVERSION = sum((
+    tuple(f'1.{k}.{i}' if i > 0 else f'1.{k}' for i in range(v + 1))
+    for k, v in MCVERSION.items()
+), start=())
+MCVERSION_MIN_K = min(MCVERSION.keys())
+MCVERSION_MIN = f'1.{MCVERSION_MIN_K}'
+MCVERSION_MAX_K = max(MCVERSION.keys())
+MCVERSION_MAX_V = MCVERSION[MCVERSION_MAX_K]
+MCVERSION_MAX = (
+    f'1.{MCVERSION_MAX_K}.{MCVERSION_MAX_V}' if MCVERSION_MAX_V > 0
+    else f'1.{MCVERSION_MAX_K}'
+)
 
 MAPPINGS: Dict[str, Mapping] = {}
 
 
 async def on_command_mapping(bot: Mirai, event: MessageEvent, args: List[str], _config: dict):
-    '''!m [名称] [选项...]
-    查找并显示匹配的第一个映射
-    [选项] := [类型] | [命名空间] | [MC版本]
-    [类型] := class | field | method [默认: 任意]
-    [命名空间] := official | intermediary | mojang | yarn [默认: 任意]
-    [MC版本] := 1.15.2 | 1.16.5 | 1.17.1 | 1.18.2 | 1.19 [默认: 1.19]'''
     if len(args) == 0:
         raise ArgumentException('参数不足')
     name = args[0]
     type_ = None
     namespace = None
-    mcversion = '1.19'
+    mcversion = MCVERSION_MAX
     for option in args[1:]:
         if option in OPTIONS_TYPE:
             type_ = option
@@ -179,6 +192,15 @@ async def on_command_mapping(bot: Mirai, event: MessageEvent, args: List[str], _
             await bot.send(event, '未知映射')
         else:
             await bot.send(event, forward_message(bot.qq, 'Yet Another Fabric Bot', result))
+
+
+on_command_mapping.__doc__ = \
+    f'''!m [名称] [选项...]
+    查找并显示匹配的第一个映射
+    [选项] := [类型] | [命名空间] | [MC版本]
+    [类型] := class | field | method [默认: 任意]
+    [命名空间] := official | intermediary | mojang | yarn [默认: 任意]
+    [MC版本] := {MCVERSION_MIN} - {MCVERSION_MAX} [默认: {MCVERSION_MAX}]'''
 
 
 def fetch_mapping() -> None:
