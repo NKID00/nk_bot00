@@ -146,7 +146,7 @@ MCVERSION = {
     16: 5,
     17: 1,
     18: 2,
-    19: 1
+    19: 2
 }
 OPTIONS_MCVERSION = sum((
     tuple(f'1.{k}.{i}' if i > 0 else f'1.{k}' for i in range(v + 1))
