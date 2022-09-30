@@ -7,7 +7,7 @@ license = "AGPL-v3-only"
 
 [tool.poetry.dependencies]
 python = ">=3.7.2,<=3.10"
-yiri-mirai = { git = "git@github.com:YiriMiraiProject/YiriMirai.git", branch = "master" }
+yiri-mirai = "^0.2.7"
 uvicorn = "^0.18.2"
 httpx = "^0.23.0"
 mcstatus = "^9.2.0"
