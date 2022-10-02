@@ -1,7 +1,8 @@
 from typing import Any
 from collections import defaultdict
+import logging
 
-from mirai import Mirai
+from mirai import Mirai, get_logger
 import httpx
 
 import nk_bot00
@@ -37,6 +38,16 @@ class CTFGameStatus:
         '''{UserId: {ChallengeId, ...}, ...}'''
         self.previous_solves: dict[int, set[int]] = defaultdict(set)
         '''{UserId: {ChallengeId, ...}, ...}'''
+        self.logger = logging.getLogger('nk_bot00.ctf')
+        self.logger.setLevel(logging.DEBUG)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)-8s %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        ch.setFormatter(formatter)
+        self.logger.addHandler(ch)
 
     async def call_api(self, api: str) -> Any:
         r = await self.client.get(URL_BASE + api)
@@ -59,9 +70,14 @@ class CTFGameStatus:
             self.challenges[cid] = challenge
             self.categories[challenge['category']].add(cid)
 
-        for solve in await self.call_api('/user/solves/all'):
+        solves = await self.call_api('/user/solves/all')
+        for solve in solves:
             self.users[solve['uid']] = solve['username']
             self.solves[solve['uid']].add(solve['cid'])
+
+        self.logger.debug('C: %s, Cp: %s, U: %s, S: %s',
+                         len(self.challenges), len(self.previous_challenges),
+                         len(self.users), len(solves))
 
     async def check(self) -> None:
         await self.query()
