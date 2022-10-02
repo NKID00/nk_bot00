@@ -1,4 +1,4 @@
-from os import remove as os_remove, walk as os_walk
+import os
 from pathlib import Path
 from sqlite3 import Connection, Cursor, connect, Row
 from sys import argv
@@ -9,14 +9,22 @@ from typing import Dict, List, Optional, Tuple
 from threading import Lock
 
 from mirai import Mirai, MessageEvent
-from httpx import get as httpx_get
+import httpx
 
 from nk_bot00.exception import ArgumentException
 from nk_bot00.util import forward_message
+import nk_bot00
 
 MOJANG_METADATA_URL = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json'
 YARN_METADATA_URL = 'https://meta.fabricmc.net/v2/versions/yarn'
 YARN_MAPPING_URL = 'https://maven.fabricmc.net/net/fabricmc/yarn/%s/yarn-%s-tiny.gz'
+
+
+CLIENT = httpx.Client(headers={
+    'User-Agent': f'nk_bot00/{nk_bot00.__version__}'
+    f' (https://github.com/NKID00/nk_bot00)'
+    f' httpx/{httpx.__version__}'
+})
 
 
 class Mapping:
@@ -25,7 +33,7 @@ class Mapping:
     lock: Lock
 
     def __init__(self, version: str) -> None:
-        for f in next(os_walk('mapping'))[2]:
+        for f in next(os.walk('mapping'))[2]:
             if f.startswith(f'{version}+'):
                 break
         else:
@@ -460,7 +468,7 @@ def map_mixin_yarn(descriptor: str, c: Connection) -> str:
 
 def fetch_mojang_mapping(version: str, c: Connection) -> None:
     print('  Fetching metadata ...')
-    r = httpx_get(MOJANG_METADATA_URL)
+    r = CLIENT.get(MOJANG_METADATA_URL)
 
     print('  Parsing metadata ...')
     for item in r.json()['versions']:
@@ -469,7 +477,7 @@ def fetch_mojang_mapping(version: str, c: Connection) -> None:
             break
 
     print('  Fetching version metadata ...')
-    r = httpx_get(url)
+    r = CLIENT.get(url)
 
     print('  Parsing version metadata ...')
     downloads = r.json()['downloads']
@@ -479,7 +487,7 @@ def fetch_mojang_mapping(version: str, c: Connection) -> None:
 
     print('  Fetching mapping ...')
     url = downloads['client_mappings']['url']
-    r = httpx_get(url)
+    r = CLIENT.get(url)
 
     print('  Parsing mapping ...')
     for l in r.text.splitlines(False):
@@ -534,7 +542,7 @@ def fetch_mojang_mapping(version: str, c: Connection) -> None:
 
 def fetch_yarn_mapping(version: str, c: Connection) -> str:
     print('  Fetching metadata ...')
-    r = httpx_get(YARN_METADATA_URL)
+    r = CLIENT.get(YARN_METADATA_URL)
 
     print('  Parsing metadata ...')
     latest_build = 0
@@ -548,7 +556,7 @@ def fetch_yarn_mapping(version: str, c: Connection) -> str:
     print(f'  Target version {latest_version} ...')
     print('  Fetching mapping ...')
     url = YARN_MAPPING_URL % ((latest_version,) * 2)
-    r = httpx_get(url)
+    r = CLIENT.get(url)
 
     print('  Parsing mapping ...')
     for l in decompress(r.content).decode('utf8').splitlines(False)[1:]:
@@ -589,7 +597,7 @@ def fetch_yarn_mapping(version: str, c: Connection) -> str:
 def write_database(version: str, c: Connection):
     path = Path('mapping') / f'{version}.db'
     if path.exists():
-        os_remove(path)
+        os.remove(path)
     c.execute('ATTACH DATABASE ? AS disk;', (str(path),))
     c.execute('CREATE TABLE disk.class AS SELECT * FROM class;')
     c.execute('CREATE TABLE disk.field AS SELECT * FROM field;')

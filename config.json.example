@@ -30,5 +30,20 @@
             "some_random_group_id": "some_random_server_address",
             "another_random_group_id": "another_random_server_address"
         }
+    },
+    "ctf": {
+        "gosessid": "some_random_gosessid",
+        "wait_second": 5,
+        "broadcast": {
+            "target": [
+                "some_random_group_id",
+                "another_random_group_id"
+            ],
+            "week": "Week 114514",
+            "all_kill_category": true,
+            "all_kill": true,
+            "new_challenge": true,
+            "score_lower_than": 200
+        }
     }
 }
