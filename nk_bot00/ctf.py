@@ -76,8 +76,8 @@ class CTFGameStatus:
             self.solves[solve['uid']].add(solve['cid'])
 
         self.logger.debug('C: %s, Cp: %s, U: %s, S: %s',
-                         len(self.challenges), len(self.previous_challenges),
-                         len(self.users), len(solves))
+                          len(self.challenges), len(self.previous_challenges),
+                          len(self.users), len(solves))
 
     async def check(self) -> None:
         await self.query()
@@ -85,13 +85,19 @@ class CTFGameStatus:
             previous_solved = self.previous_solves[uid]
             if solved == previous_solved:  # nothing is solved lately
                 continue
+            for cid in solved - previous_solved:
+                challenge = self.challenges[cid]
+                self.logger.debug('%s, %s S %s, %s, %sP, %sS',
+                                  self.users[uid], uid, challenge['name'],
+                                  cid, challenge['score'],
+                                  challenge['solver_count'])
             for category, challenges in self.categories.items():
                 if ((not challenges.issubset(previous_solved))  # already ak
                         and challenges.issubset(solved)
                         and self.all_kill_category):
                     await self.broadcast(
                         f'恭喜 {self.users[uid]} AK {self.week} {category}！')
-            if solved == self.challenges.keys() and self.all_kill:
+            if set(self.challenges.keys()).issubset(solved) and self.all_kill:
                 await self.broadcast(
                     f'恭喜 {self.users[uid]} AK {self.week}！')
         for cid, challenge in self.challenges.items():
@@ -110,5 +116,6 @@ class CTFGameStatus:
                     f' {self.score_lower_than} 分以下！')
 
     async def broadcast(self, message: str) -> None:
+        self.logger.debug('%s', message)
         for target in self.target:
             await self.bot.send_group_message(target, message)
