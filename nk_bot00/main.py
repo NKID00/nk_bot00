@@ -5,6 +5,7 @@ from typing import Any, Awaitable, Callable, Dict, Iterable, List, Tuple
 
 from mirai import (Mirai, FriendMessage, GroupMessage, MessageEvent,
                    WebSocketAdapter)
+import madbg
 
 from nk_bot00.exception import ArgumentException
 from nk_bot00.hello import on_command_hello
@@ -58,6 +59,8 @@ def get_help_message(args: List[str], command_prefix: Tuple[str],
 
 
 def main():
+    # madbg.set_trace_on_connect()
+
     with open('config.json', 'r', encoding='utf8') as f:
         config = json.load(f)
     command_prefix = tuple(config['command_prefix'])
