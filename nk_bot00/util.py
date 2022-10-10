@@ -1,9 +1,10 @@
 import datetime
 import io
 import logging
-from typing import AnyStr, Callable, Optional, Union
+from typing import Any, Callable, Optional, TextIO, Union
 
-from mirai.models.message import Forward, ForwardMessageNode, MessageChain, MessageComponent
+from mirai.models.message import (
+    Forward, ForwardMessageNode, MessageChain, MessageComponent)
 
 
 def forward_message(
@@ -51,8 +52,9 @@ def endswith_line_break(s: str) -> bool:
 
 
 class LoggerWrapper:
-    def __init__(self, log_func: Callable) -> None:
+    def __init__(self, log_func: Callable, origin: TextIO) -> None:
         self.log_func = log_func
+        self.origin = origin
         self._buffer = io.StringIO()
 
     def write(self, s: str) -> int:
@@ -74,3 +76,6 @@ class LoggerWrapper:
 
     def flush(self) -> None:
         pass
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.origin, name)

@@ -63,8 +63,8 @@ def get_help_message(args: list[str], command_prefix: tuple[str],
 def main() -> None:
     logger_stdout = logger('stdout')
     logger_stderr = logger('stderr')
-    sys.stdout = cast(TextIO, LoggerWrapper(logger_stdout.info))
-    sys.stderr = cast(TextIO, LoggerWrapper(logger_stderr.error))
+    sys.stdout = cast(TextIO, LoggerWrapper(logger_stdout.info, sys.stdout))
+    sys.stderr = cast(TextIO, LoggerWrapper(logger_stderr.error, sys.stderr))
 
     with open('config.json', 'r', encoding='utf8') as f:
         config = json.load(f)
