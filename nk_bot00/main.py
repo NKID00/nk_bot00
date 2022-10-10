@@ -14,7 +14,7 @@ from nk_bot00.echo import on_command_echo
 from nk_bot00.mapping import on_command_mapping
 from nk_bot00.ping import on_command_ping
 from nk_bot00.ctf import CTFGameStatus
-from nk_bot00.util import logger, LoggerWrapper
+from nk_bot00.util import get_logger
 
 
 COMMAND_HANDLER: dict[str, Callable[
@@ -60,8 +60,8 @@ def get_help_message(args: list[str], command_prefix: tuple[str],
     )
 
 
-
 def main() -> None:
+    logger = get_logger()
     with open('config.json', 'r', encoding='utf8') as f:
         config = json.load(f)
     command_prefix = cast(tuple[str], tuple(config['command_prefix']))
@@ -97,7 +97,7 @@ def main() -> None:
                 return
 
             if any(item.type not in ['Source', 'Plain']
-                for item in event.message_chain):
+                   for item in event.message_chain):
                 # 只接受纯文本
                 return
             message = str(event.message_chain).strip()
@@ -114,7 +114,7 @@ def main() -> None:
                         args, command_prefix, available_commands))
                 elif command in available_commands:
                     await COMMAND_HANDLER[command](bot, event, args,
-                                                command_config[command])
+                                                   command_config[command])
             except ArgumentException as exc:
                 docstring = COMMAND_HANDLER[command].__doc__
                 if docstring is not None:
@@ -133,7 +133,8 @@ def main() -> None:
                     )
         except Exception:
             await bot.send_friend_message(su, traceback.format_exc())
-            traceback.print_exc()
+            logger.exception('Exception on message %s from %s',
+                             event.message_chain, event.sender)
             raise
 
     ctf_config = config['ctf']
@@ -151,7 +152,7 @@ def main() -> None:
                 await game_status.check()
         except Exception:
             await bot.send_friend_message(su, traceback.format_exc())
-            traceback.print_exc()
+            logger.exception('Exception in background task')
             raise
 
     bot.run(host='localhost', port=32181)

@@ -39,7 +39,7 @@ class CTFGameStatus:
         '''{UserId: {ChallengeId, ...}, ...}'''
         self.previous_solves: dict[int, set[int]] = defaultdict(set)
         '''{UserId: {ChallengeId, ...}, ...}'''
-        self.logger = nk_bot00.util.logger('ctf')
+        self.logger = nk_bot00.util.get_logger('ctf')
 
     async def call_api(self, api: str) -> Any:
         r = await self.client.get(URL_BASE + api)

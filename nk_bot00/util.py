@@ -30,7 +30,7 @@ def forward_message(
     return Forward(node_list=nodes)
 
 
-def logger(name: Optional[str] = None) -> logging.Logger:
+def get_logger(name: Optional[str] = None) -> logging.Logger:
     if name is None:
         logger_ = logging.getLogger('nk_bot00')
     else:
