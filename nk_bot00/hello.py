@@ -1,11 +1,9 @@
-from typing import List
-
 from mirai import Mirai, MessageEvent
 
 from nk_bot00.exception import ArgumentException
 
 
-async def on_command_hello(bot: Mirai, event: MessageEvent, args: List[str], _config: dict):
+async def on_command_hello(bot: Mirai, event: MessageEvent, args: list[str], _config: dict):
     '''!hello
     显示友好问候'''
     if len(args) > 0:

@@ -5,7 +5,7 @@ from sys import argv
 from re import match as re_match
 from gzip import decompress
 from traceback import print_exc
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 from threading import Lock
 
 from mirai import Mirai, MessageEvent
@@ -47,7 +47,7 @@ class Mapping:
         self.c.row_factory = Row
         self.lock = Lock()
 
-    def execute(self, sql: str, args: Tuple[str]) -> Cursor:
+    def execute(self, sql: str, args: tuple[str]) -> Cursor:
         with self.lock:
             return self.c.execute(sql, args)
 
@@ -56,7 +56,7 @@ class Mapping:
         name: str,
         type_: Optional[str],
         namespace: Optional[str]
-    ) -> Optional[List[str]]:
+    ) -> Optional[list[str]]:
         if type_ is None:
             for t in ('class', 'field', 'method'):
                 result = self.find(name, t, namespace)
@@ -169,10 +169,10 @@ MCVERSION_MAX = (
     else f'1.{MCVERSION_MAX_K}'
 )
 
-MAPPINGS: Dict[str, Mapping] = {}
+MAPPINGS: dict[str, Mapping] = {}
 
 
-async def on_command_mapping(bot: Mirai, event: MessageEvent, args: List[str], _config: dict):
+async def on_command_mapping(bot: Mirai, event: MessageEvent, args: list[str], _config: dict):
     if len(args) == 0:
         raise ArgumentException('参数不足')
     name = args[0]
@@ -261,8 +261,8 @@ def init_database() -> Connection:
 
 def insert_or_update(
     table: str,
-    primary_key: Dict[str, str],
-    other: Dict[str, str],
+    primary_key: dict[str, str],
+    other: dict[str, str],
     c: Connection
 ) -> None:
     c.execute(

@@ -1,5 +1,3 @@
-from typing import List
-
 from mirai import Mirai, MessageEvent, GroupMessage
 from mcstatus import JavaServer
 
@@ -7,7 +5,7 @@ from nk_bot00.exception import ArgumentException
 from nk_bot00.util import forward_message
 
 
-async def on_command_ping(bot: Mirai, event: MessageEvent, args: List[str], config: dict):
+async def on_command_ping(bot: Mirai, event: MessageEvent, args: list[str], config: dict):
     '''!ping
     查询服务器状态'''
     if len(args) > 0:

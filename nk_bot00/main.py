@@ -1,11 +1,11 @@
 import shlex
 import json
 import asyncio
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Tuple
+import sys
+from typing import Any, Awaitable, Callable, Iterable, TextIO, cast
 
 from mirai import (Mirai, FriendMessage, GroupMessage, MessageEvent,
                    WebSocketAdapter)
-import madbg
 
 from nk_bot00.exception import ArgumentException
 from nk_bot00.hello import on_command_hello
@@ -13,22 +13,23 @@ from nk_bot00.echo import on_command_echo
 from nk_bot00.mapping import on_command_mapping
 from nk_bot00.ping import on_command_ping
 from nk_bot00.ctf import CTFGameStatus
+from nk_bot00.util import logger, LoggerWrapper
 
 
-COMMAND_HANDLER: Dict[str, Callable[
-    [Mirai, MessageEvent, List[str], Any], Awaitable[None]]] = {
+COMMAND_HANDLER: dict[str, Callable[
+    [Mirai, MessageEvent, list[str], Any], Awaitable[None]]] = {
     'hello': on_command_hello,
     'echo': on_command_echo,
     'mapping': on_command_mapping,
     'ping': on_command_ping
 }
-COMMAND_ALIAS: Dict[str, str] = {
+COMMAND_ALIAS: dict[str, str] = {
     'h': 'help',
     'm': 'mapping'
 }
 
 
-def get_help_message(args: List[str], command_prefix: Tuple[str],
+def get_help_message(args: list[str], command_prefix: tuple[str],
                      available_commands: Iterable[str]) -> str:
     if len(args) == 1:
         command = args[0].strip()
@@ -58,12 +59,16 @@ def get_help_message(args: List[str], command_prefix: Tuple[str],
     )
 
 
-def main():
-    # madbg.set_trace_on_connect()
+
+def main() -> None:
+    logger_stdout = logger('stdout')
+    logger_stderr = logger('stderr')
+    sys.stdout = cast(TextIO, LoggerWrapper(logger_stdout.info))
+    sys.stderr = cast(TextIO, LoggerWrapper(logger_stderr.error))
 
     with open('config.json', 'r', encoding='utf8') as f:
         config = json.load(f)
-    command_prefix = tuple(config['command_prefix'])
+    command_prefix = cast(tuple[str], tuple(config['command_prefix']))
     friend_permission = {
         int(k): v for k, v in config['friend_permission'].items()}
     group_permission = {

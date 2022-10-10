@@ -1,11 +1,9 @@
-from typing import List
-
 from mirai import Mirai, MessageEvent
 
 from nk_bot00.exception import ArgumentException
 
 
-async def on_command_echo(bot: Mirai, event: MessageEvent, args: List[str], _config: dict):
+async def on_command_echo(bot: Mirai, event: MessageEvent, args: list[str], _config: dict):
     '''!echo [文本...]
     回显文本'''
     if len(args) == 0:

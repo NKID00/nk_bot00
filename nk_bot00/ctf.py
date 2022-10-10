@@ -2,10 +2,11 @@ from typing import Any
 from collections import defaultdict
 import logging
 
-from mirai import Mirai, get_logger
+from mirai import Mirai
 import httpx
 
 import nk_bot00
+import nk_bot00.util
 
 URL_BASE = 'https://0xgame.h4ck.fun/api/v1'
 
@@ -38,16 +39,7 @@ class CTFGameStatus:
         '''{UserId: {ChallengeId, ...}, ...}'''
         self.previous_solves: dict[int, set[int]] = defaultdict(set)
         '''{UserId: {ChallengeId, ...}, ...}'''
-        self.logger = logging.getLogger('nk_bot00.ctf')
-        self.logger.setLevel(logging.DEBUG)
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)-8s %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        ch.setFormatter(formatter)
-        self.logger.addHandler(ch)
+        self.logger = nk_bot00.util.logger('ctf')
 
     async def call_api(self, api: str) -> Any:
         r = await self.client.get(URL_BASE + api)
