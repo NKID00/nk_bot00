@@ -82,7 +82,7 @@ class CTFGameStatus:
     async def check(self) -> None:
         await self.query()
         for uid, solved in self.solves.items():
-            previous_solved = self.previous_solves[uid]
+            previous_solved = self.previous_solves.get(uid, set())
             if solved == previous_solved:  # nothing is solved lately
                 continue
             for cid in solved - previous_solved:
