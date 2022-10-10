@@ -35,6 +35,8 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
         logger_ = logging.getLogger('nk_bot00')
     else:
         logger_ = logging.getLogger('nk_bot00.' + name)
+    if logger_.hasHandlers():
+        return logger_
     logger_.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
