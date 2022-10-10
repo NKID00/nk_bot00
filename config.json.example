@@ -25,6 +25,7 @@
     "verify_key": "1145141919810",
     "host": "localhost",
     "port": 11451,
+    "su_qq": 1145141919810,
     "command_config": {
         "ping": {
             "some_random_group_id": "some_random_server_address",
