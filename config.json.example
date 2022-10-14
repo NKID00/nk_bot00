@@ -33,6 +33,7 @@
         }
     },
     "ctf": {
+        "enabled": false,
         "gosessid": "some_random_gosessid",
         "wait_second": 5,
         "broadcast": {

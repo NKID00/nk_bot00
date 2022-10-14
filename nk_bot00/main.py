@@ -1,9 +1,8 @@
 import shlex
 import json
 import asyncio
-import sys
 import traceback
-from typing import Any, Awaitable, Callable, Iterable, TextIO, cast
+from typing import Any, Awaitable, Callable, Iterable, cast
 
 from mirai import (Mirai, FriendMessage, GroupMessage, MessageEvent,
                    WebSocketAdapter)
@@ -137,12 +136,13 @@ def main() -> None:
                              event.message_chain, event.sender)
             raise
 
-    ctf_config = config['ctf']
-    broadcast_config = ctf_config['broadcast']
-
     @bot.add_background_task
     async def _():
         nonlocal bot, su
+        ctf_config = config['ctf']
+        broadcast_config = ctf_config['broadcast']
+        if not ctf_config['enabled']:
+            return
         try:
             game_status = CTFGameStatus(
                 bot=bot, gosessid=ctf_config['gosessid'], **broadcast_config)

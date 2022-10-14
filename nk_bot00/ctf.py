@@ -1,6 +1,5 @@
 from typing import Any
 from collections import defaultdict
-import logging
 
 from mirai import Mirai
 import httpx
@@ -51,13 +50,17 @@ class CTFGameStatus:
                 request=r.request, response=r)
         return data['data']
 
-    async def query(self) -> None:
+    async def query(self) -> bool:
         self.challenges, self.previous_challenges = {}, self.challenges
         self.categories = defaultdict(set)
         self.users = {}
         self.solves, self.previous_solves = defaultdict(set), self.solves
 
-        for challenge in await self.call_api('/user/challenges/all'):
+        challenges = await self.call_api('/user/challenges/all')
+        if challenges is None:
+            self.logger.debug('No challenges')
+            return False
+        for challenge in challenges:
             cid = challenge['id']
             self.challenges[cid] = challenge
             self.categories[challenge['category']].add(cid)
@@ -70,9 +73,11 @@ class CTFGameStatus:
         self.logger.debug('C: %s, Cp: %s, U: %s, S: %s',
                           len(self.challenges), len(self.previous_challenges),
                           len(self.users), len(solves))
+        return True
 
     async def check(self) -> None:
-        await self.query()
+        if not await self.query():
+            return
         for uid, solved in self.solves.items():
             previous_solved = self.previous_solves.get(uid, set())
             if solved == previous_solved:  # nothing is solved lately
