@@ -83,6 +83,8 @@ class CTFGameStatus:
             if solved == previous_solved:  # nothing is solved lately
                 continue
             for cid in solved - previous_solved:
+                if cid not in self.challenges:
+                    continue
                 challenge = self.challenges[cid]
                 self.logger.debug('%s, %s S %s, %s, %sP, %sS',
                                   self.users[uid], uid, challenge['name'],
