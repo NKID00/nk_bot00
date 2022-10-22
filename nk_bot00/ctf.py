@@ -13,13 +13,14 @@ URL_BASE = 'https://0xgame.h4ck.fun/api/v1'
 class CTFGameStatus:
     def __init__(self, bot: Mirai, gosessid: str, target: list[str], week: str,
                  all_kill_category: bool, all_kill: bool, new_challenge: bool,
-                 score_lower_than: int) -> None:
+                 blood: bool, score_lower_than: int) -> None:
         self.bot = bot
         self.target = list(map(int, target))
         self.week = week
         self.all_kill_category = all_kill_category
         self.all_kill = all_kill
         self.new_challenge = new_challenge
+        self.blood = blood
         self.score_lower_than = score_lower_than
         self.client = httpx.AsyncClient(headers={
             'User-Agent': f'nk_bot00/{nk_bot00.__version__}'
@@ -86,10 +87,18 @@ class CTFGameStatus:
                 if cid not in self.challenges:
                     continue
                 challenge = self.challenges[cid]
+                user_name = self.users[uid]
+                challenge_name = challenge['name']
+                solver_count = challenge['solver_count']
                 self.logger.debug('%s, %s S %s, %s, %sP, %sS',
-                                  self.users[uid], uid, challenge['name'],
+                                  user_name, uid, challenge_name,
                                   cid, challenge['score'],
-                                  challenge['solver_count'])
+                                  solver_count)
+                if self.blood and solver_count <= 3:
+                    await self.broadcast(
+                        f'恭喜 {user_name} 拿下 {self.week} '
+                        f'{challenge["category"]} '
+                        f'{challenge_name} {"一二三"[solver_count - 1]}血！')
             for category, challenges in self.categories.items():
                 if ((not challenges.issubset(previous_solved))  # already ak
                         and challenges.issubset(solved)

@@ -45,6 +45,7 @@
             "all_kill_category": true,
             "all_kill": true,
             "new_challenge": true,
+            "blood": false,
             "score_lower_than": 200
         }
     }
