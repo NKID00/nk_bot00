@@ -6,6 +6,7 @@ from typing import Any, Awaitable, Callable, Iterable, cast
 
 from mirai import (Mirai, FriendMessage, GroupMessage, MessageEvent,
                    WebSocketAdapter)
+import httpx
 
 from nk_bot00.exception import ArgumentException
 from nk_bot00.hello import on_command_hello
@@ -149,7 +150,10 @@ def main() -> None:
             await game_status.query()
             while True:
                 await asyncio.sleep(ctf_config['wait_second'])
-                await game_status.check()
+                try:
+                    await game_status.check()
+                except httpx.TimeoutException:
+                    logger.warning('Timeout')
         except Exception:
             await bot.send_friend_message(su, traceback.format_exc())
             logger.exception('Exception in background task')
