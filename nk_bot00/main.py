@@ -147,13 +147,22 @@ def main() -> None:
         try:
             game_status = CTFGameStatus(
                 bot=bot, gosessid=ctf_config['gosessid'], **broadcast_config)
-            await game_status.query()
             while True:
-                await asyncio.sleep(ctf_config['wait_second'])
-                try:
-                    await game_status.check()
-                except httpx.TimeoutException:
-                    logger.warning('Timeout')
+                while True:
+                    try:
+                        await game_status.query()
+                    except httpx.TimeoutException:
+                        logger.warning('Timeout')
+                    else:
+                        break
+                    await asyncio.sleep(ctf_config['wait_second'])
+                while True:
+                    await asyncio.sleep(ctf_config['wait_second'])
+                    try:
+                        await game_status.check()
+                    except httpx.TimeoutException:
+                        logger.warning('Timeout')
+                        break
         except Exception:
             await bot.send_friend_message(su, traceback.format_exc())
             logger.exception('Exception in background task')
