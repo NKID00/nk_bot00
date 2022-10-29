@@ -105,7 +105,11 @@ def main() -> None:
                 # 只接受允许的前缀开头的命令
                 return
             message = message[1:].strip()
-            command, *args = shlex.split(message)
+            splitted = shlex.split(message)
+            if len(splitted) == 0:
+                # 不接受空命令
+                return
+            command, *args = splitted
             command = COMMAND_ALIAS.get(command, command)
 
             try:
