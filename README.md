@@ -1,9 +1,10 @@
 ## features
 
 - echo
-- hellq
+- hello
 - mapping (Yet Another Fabric Bot)
 - ping
+- ctf
 
 ## usage
 
